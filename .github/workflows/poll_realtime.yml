@@ -3,8 +3,8 @@ name: Poll TfNSW realtime
 on:
   schedule:
     # 12:30pm UTC times = 23:30pm Sydney time (Will need to be adjusted again for April daylight savings)
-    # Timezone: 'Australia/Sydney' didn't work in first overnight test
-    - cron: '12 30 * * *'
+    # Timezone: 'Australia/Sydney' didn't schedule correctly in first overnight test
+    - cron: '30 12 * * *'
   workflow_dispatch:
     inputs:
       minutes:
