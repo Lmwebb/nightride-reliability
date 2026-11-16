@@ -12,6 +12,7 @@ from google.transit import gtfs_realtime_pb2
 URL = "https://api.transport.nsw.gov.au/v1/gtfs/realtime/buses"
 OUTPUT_DIR = Path("samples")
 VOLUME_ROOT = "/Volumes/nightride/landing/tfnsw"
+TEST_ROUTE_ID = os.environ.get("TEST_ROUTE_ID", "")
 
 def is_nightride(route_id):
 	# Analyses the route_id string, to determine if it's a night route.
@@ -19,8 +20,10 @@ def is_nightride(route_id):
 	return route_part.startswith("N") and len(route_part) >= 2 and route_part[1].isdigit()
 
 def keep(route_id):
-	# Temporary test filter (a daytime route). It'll be switched to is_nightride.
-	return route_id == "2509_333"
+	# Run a check for a test route id otherwise runs is_nightride.
+	if TEST_ROUTE_ID:
+		return route_id == TEST_ROUTE_ID
+	return is_nightride(route_id)
 
 def fetch_feed(api_key):
 	# Fetches the response from tfnsw api, returning a readable message.
@@ -70,8 +73,9 @@ def upload_file(local_path, host, token):
 
 	data = local_path.read_bytes()
 	date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-	remote_path = f"{VOLUME_ROOT}/trip_updates/date={date}/{local_path.name}"
+	
+	folder = "test" if TEST_ROUTE_ID else "trip_updates"
+	remote_path = f"{VOLUME_ROOT}/{folder}/date={date}/{local_path.name}"
 
 	url = f"{host}/api/2.0/fs/files{remote_path}"
 
@@ -119,7 +123,9 @@ def main():
 	api_key = os.environ["TFNSW_API_KEY"].strip()
 	host = os.environ["DATABRICKS_HOST"].strip()
 	token = os.environ["DATABRICKS_TOKEN"].strip()
-	run(api_key, host, token, duration_minutes=2, interval_seconds=30)
+	duration = int(os.environ.get("POLL_MINUTES", "330"))
+	interval = int(os.environ.get("POLL_INTERVAL_SECONDS", "60"))
+	run(api_key, host, token, duration, interval)
 
 if __name__ == "__main__":
 	main()
