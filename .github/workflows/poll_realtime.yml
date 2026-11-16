@@ -1,6 +1,9 @@
 name: Poll TfNSW realtime
 
 on:
+  schedule:
+    - cron: '30 23 * * *'
+      timezone: 'Australia/Sydney'
   workflow_dispatch:
     inputs:
       minutes:
