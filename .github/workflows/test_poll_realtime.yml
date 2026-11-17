@@ -1,0 +1,38 @@
+name: Poll TfNSW realtime (timezone)
+
+on:
+  schedule:
+    # Retrying timezone: 'Australia/Sydney'
+    - cron: '30 23 * * *'
+      timezone: 'Australia/Sydney'   
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Minutes to poll for"
+        default: "2"
+      test_route_id:
+        description: "Test route (blank = real NightRide filter)"
+        default: "2509_333"
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      
+      - run: pip install -r requirements.txt
+
+      - name: Run poller
+        env:
+          PYTHONUNBUFFERED: "1"
+          TFNSW_API_KEY: ${{ secrets.TFNSW_API_KEY }}
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+          POLL_MINUTES: ${{ inputs.minutes || '330' }}
+          TEST_ROUTE_ID: ${{ inputs.test_route_id || '' }}
+        run: python ingest/poll_realtime.py
